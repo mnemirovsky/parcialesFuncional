@@ -2,13 +2,12 @@ import Text.Show.Functions()
 
 data Elemento = UnElemento { 
 	tipo :: String,
-	ataque :: (Personaje-> Personaje),
-	defensa :: (Personaje-> Personaje) }
+	ataque :: Personaje-> Personaje,
+	defensa :: Personaje-> Personaje } deriving (Show)
 data Personaje = UnPersonaje { 
-	nombre :: String,
 	salud :: Float,
 	elementos :: [Elemento],
-	anioPresente :: Int }
+	anioPresente :: Int } deriving (Show)
 
 --------------
 -- Punto 01 --
@@ -78,22 +77,26 @@ esbirrosMalvados cantidad = ((take cantidad) . repeat) esbirro
 
 --c.
 jack :: Personaje
-jack = UnPersonaje "Jack" 300 [concentracion 3, katana] 200
+jack = UnPersonaje 300 [concentracion 3, katana] 200
  where 
 	katana = UnElemento "Magia"  (causarDanio 1000) id
 
 --d.
 aku :: Int -> Float -> Personaje
-aku anioAku saludAku = UnPersonaje "Aku" saludAku ((concentracion 4) : (esbirrosMalvados (anioAku * 100)) : portalAFuturo anioAku)
- where
-	portalAFuturo anioAku = UnElemento "Magia" (mandarAlAnio anioFuturo) (aku anioFuturo salud)
-	anioFuturo = anioAku + 2800
+aku anioAku saludAku = UnPersonaje saludAku ((concentracion 4) : portalAFuturo anioAku : (esbirrosMalvados (anioAku * 100))) anioAku
 
 --auxiliares
 
 concentrar :: Int -> Personaje -> Personaje
 concentrar 1 personaje = meditar personaje
 concentrar x personaje = concentrar (x-1) (meditar personaje)
+
+portalAFuturo :: Int -> Elemento
+portalAFuturo unAnio = UnElemento{
+	tipo = "Magia",
+	ataque = mandarAlAnio (unAnio + 2800),
+	defensa = aku (unAnio + 2800) . salud
+}
 
 --------------
 -- Punto 04 --
@@ -104,14 +107,23 @@ luchar atacante defensor
 	| salud atacante == 0 = (defensor, atacante)
 	| otherwise = luchar defensorTrasRonda atacanteTrasRonda
 	where
-		defensorTrasRonda = snd (todosLosElementos (elementos atacante) (atacante, defensor))
-		atacanteTrasRonda = fst (todosLosElementos (elementos atacante) (atacante, defensor))
+		defensorTrasRonda = aplicarAtaques atacante defensor
+		atacanteTrasRonda = aplicarDefensivos atacante
 
 --auxiliar
 
-aplicarElemento :: Elemento -> (Personaje , Personaje) -> (Personaje , Personaje)
-aplicarElemento elemento (atacante , defensor) = ((defensa elemento) atacante, (ataque elemento) defensor)
+aplicarAtaques :: Personaje -> Personaje -> Personaje
+aplicarAtaques atacante defensor =
+	foldr (($) . ataque) defensor (elementos atacante)  
 
-todosLosElementos :: [Elemento] -> (Personaje , Personaje) -> (Personaje , Personaje)
-todosLosElementos elementos (atacante, defensor) =
-	foldl (aplicarElemento) (atacante, defensor) elementos
+aplicarDefensivos :: Personaje -> Personaje
+aplicarDefensivos atacante = 
+	foldr (($) . defensa) atacante (elementos atacante)
+
+--------------
+-- Punto 05 --
+--------------
+f :: Num d => (a , c) -> (b -> c) -> c 
+f x y z
+    | y 0 == z = map (fst.x z)
+    | otherwise = map (snd.x (y 0))
