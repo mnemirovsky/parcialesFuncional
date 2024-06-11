@@ -91,3 +91,20 @@ infinitosAy = "ay " ++ infinitosAy
 --b. 
 -- caso que si termina: rangerHabilidoso alfa5
 -- caso que no termina: superHabilidades (habilidades' alfa5)
+
+----------------------------- Punto 08 ------------------
+
+data ChicaSuperPoderosa = ChicaSuperPoderosa {
+    color' :: String,
+    cantidadDePelo :: Int
+} deriving(Show, Eq)
+
+bombon  = ChicaSuperPoderosa "rojo"  1
+burbuja = ChicaSuperPoderosa "azul"  2
+bellota = ChicaSuperPoderosa "verde" 3
+
+chicaLider :: [ChicaSuperPoderosa] -> ChicaSuperPoderosa
+chicaLider (chica:chicas) = findOrElse (serLaRoja) (chica) (chica:chicas)
+
+serLaRoja :: ChicaSuperPoderosa -> Bool
+serLaRoja unaChica = color' unaChica == "rojo"
